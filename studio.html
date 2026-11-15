@@ -1,0 +1,253 @@
+
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Metal Beat Studio</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#090d16;color:#e9f1ff;font:14px Arial}
+header{height:60px;background:#151e2d;border-bottom:1px solid #34445b;display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.logo{font-size:20px;font-weight:bold;color:#00e5ff}
+button,select,input{font:inherit}
+button{background:#00cfe8;color:#06121b;border:0;border-radius:5px;padding:9px 13px;cursor:pointer;font-weight:bold}
+button.dark{background:#26364d;color:white}
+input,select{background:#101a2a;color:white;border:1px solid #40516a;border-radius:5px;padding:7px}
+.layout{display:grid;grid-template-columns:190px 1fr;min-height:calc(100vh - 90px)}
+aside{background:#101827;border-right:1px solid #34445b;padding:14px}
+aside h3{color:#00e5ff;font-size:12px;letter-spacing:1px}
+.item{padding:12px 8px;border-radius:5px;color:#bdcbe0;cursor:pointer}
+.item:hover{background:#243750;color:#00e5ff}
+main{padding:14px;min-width:0}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#182437;padding:10px;border-radius:8px;margin-bottom:14px}
+.toolbar input{width:65px}
+.panel{background:#141e30;border:1px solid #34445b;border-radius:8px;padding:13px;margin-bottom:14px;overflow:hidden}
+h2{font-size:15px;color:#00e5ff;margin:0 0 12px}
+h3{font-size:13px;margin:0 0 10px}
+.playlist{overflow-x:auto}
+.ruler,.track{display:grid;grid-template-columns:repeat(16,minmax(30px,1fr));min-width:500px}
+.ruler span{text-align:center;background:#263750;padding:7px;border-right:1px solid #40516a;font-size:11px}
+.track{height:48px;border-bottom:1px solid #2a3a50}
+.cell{border-right:1px solid #283b53;position:relative;cursor:pointer}
+.cell:nth-child(4n+1){background:#ffffff08}
+.clip{position:absolute;inset:5px 2px;background:#00aeca;border-radius:4px}
+.track:nth-child(3) .clip{background:#c13c91}
+.track:nth-child(4) .clip{background:#7765db}
+.track:nth-child(5) .clip{background:#339c70}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.steps{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.step{padding:12px 0;background:#263750;color:white}
+.step.on{background:#00d9ee;color:#06121b}
+.keys{display:flex;gap:3px;height:125px}
+.key{flex:1;background:#f4f5fa;color:#111;border-radius:0 0 5px 5px;padding:0;font-size:10px}
+.key.black{background:#252e40;color:white}
+.mixer{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.channel{background:#0d1726;border:1px solid #34445b;padding:9px 4px;text-align:center;border-radius:5px}
+.channel input{width:100%;padding:0;margin-top:12px;accent-color:#00e5ff}
+.small{font-size:11px;color:#9eacc1}
+@media(max-width:700px){
+.layout{grid-template-columns:1fr}
+aside{display:grid;grid-template-columns:repeat(2,1fr);gap:3px}
+aside h3{grid-column:1/-1}
+main{padding:8px}
+.columns{grid-template-columns:1fr}
+.toolbar{gap:5px}
+.toolbar button{padding:8px}
+}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">♫ METAL BEAT STUDIO</div>
+<span class="small">WORKSTATION 1.0</span>
+</header>
+
+<div class="layout">
+<aside>
+<h3>♫ BÖNGÉSZŐ</h3>
+<div class="item" onclick="document.getElementById('playlist').scrollIntoView()">📁 Playlist</div>
+<div class="item" onclick="document.getElementById('drums').scrollIntoView()">🥁 Dobgép</div>
+<div class="item" onclick="document.getElementById('piano').scrollIntoView()">🎹 Piano Roll</div>
+<div class="item" onclick="document.getElementById('mixer').scrollIntoView()">🎚️ Mixer</div>
+<div class="item" onclick="document.getElementById('instruments').scrollIntoView()">🎸 Hangszerek</div>
+</aside>
+
+<main>
+<div class="toolbar">
+<button id="play">▶ PLAY</button>
+<button class="dark" id="stop">■ STOP</button>
+<label>BPM <input id="bpm" type="number" value="120" min="50" max="220"></label>
+<label>Ütem <select><option>4/4</option><option>3/4</option><option>6/8</option></select></label>
+<span id="status" class="small">Készen áll</span>
+</div>
+
+<section class="panel" id="playlist">
+<h2>▦ PLAYLIST – ZENEI ELRENDEZÉS</h2>
+<p class="small">Kattints egy mezőre, hogy klipet hozz létre vagy törölj.</p>
+<div class="playlist">
+<div class="ruler">
+<span>1</span><span>2</span><span>3</span><span>4</span>
+<span>5</span><span>6</span><span>7</span><span>8</span>
+<span>9</span><span>10</span><span>11</span><span>12</span>
+<span>13</span><span>14</span><span>15</span><span>16</span>
+</div>
+<div id="tracks"></div>
+</div>
+</section>
+
+<div class="columns">
+<section class="panel" id="drums">
+<h2>🥁 STEP SEQUENCER</h2>
+<div id="sequencer"></div>
+</section>
+
+<section class="panel" id="piano">
+<h2>🎹 PIANO ROLL</h2>
+<p class="small">Kattints a billentyűkre a hangok lejátszásához.</p>
+<div class="keys" id="keyboard"></div>
+</section>
+</div>
+
+<section class="panel" id="instruments">
+<h2>🎸 HANGSZERBÖNGÉSZŐ</h2>
+<div id="instrumentList"></div>
+</section>
+
+<section class="panel" id="mixer">
+<h2>🎚️ MIXER – HANGKEVERŐ</h2>
+<div class="mixer">
+<div class="channel">MASTER<input type="range" min="0" max="100" value="70"></div>
+<div class="channel">DRUMS<input type="range" min="0" max="100" value="70"></div>
+<div class="channel">BASS<input type="range" min="0" max="100" value="70"></div>
+<div class="channel">LEAD<input type="range" min="0" max="100" value="70"></div>
+<div class="channel">FX<input type="range" min="0" max="100" value="70"></div>
+</div>
+<p>Master hangerő <input id="volume" type="range" min="0" max="100" value="70"></p>
+<p>Szűrő <input id="filter" type="range" min="100" max="10000" value="8000"></p>
+<p>Delay <input id="delay" type="range" min="0" max="80" value="15"></p>
+</section>
+</main>
+</div>
+
+<script>
+const audio=new(window.AudioContext||window.webkitAudioContext)();
+const master=audio.createGain();
+const filter=audio.createBiquadFilter();
+master.connect(filter);
+filter.connect(audio.destination);
+master.gain.value=.7;
+filter.frequency.value=8000;
+
+const names=["Zongora","Dobgép","Basszusgitár","Szintetizátor","Gitár","Vonósok","Orgona","808 Bass","Akusztikus dob","Elektromos gitár","Fuvola","Hegedű"];
+const icons=["🎹","🥁","🎸","🎛️","🎸","🎻","🎹","🔊","🥁","🎸","🪈","🎻"];
+let selected=0;
+const list=document.getElementById("instrumentList");
+names.forEach((name,i)=>{
+let b=document.createElement("button");
+b.className="dark";
+b.textContent=icons[i]+" "+name;
+b.style.margin="4px";
+b.onclick=()=>{selected=i;document.getElementById("status").textContent="Kiválasztva: "+name};
+list.appendChild(b);
+});
+
+function sound(freq,duration=.3){
+if(audio.state==="suspended")audio.resume();
+let osc=audio.createOscillator();
+let gain=audio.createGain();
+const types=["triangle","sine","sawtooth","sawtooth","triangle","sawtooth","square","sine","sine","sawtooth","sine","sawtooth"];
+osc.type=types[selected];
+osc.frequency.value=freq;
+gain.gain.setValueAtTime(.18,audio.currentTime);
+gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);
+osc.connect(gain);
+gain.connect(master);
+osc.start();
+osc.stop(audio.currentTime+duration);
+}
+
+const freqs=[261.63,293.66,329.63,349.23,392,440,493.88,523.25];
+const keyboard=document.getElementById("keyboard");
+freqs.forEach((f,i)=>{
+let b=document.createElement("button");
+b.className="key";
+b.textContent=["C","D","E","F","G","A","B","C"][i];
+b.onclick=()=>sound(f);
+keyboard.appendChild(b);
+});
+
+const drumNames=["Kick","Snare","Hi-hat","Clap"];
+let pattern=drumNames.map(()=>Array(16).fill(false));
+pattern[0][0]=pattern[0][8]=true;
+pattern[1][4]=pattern[1][12]=true;
+for(let i=0;i<16;i+=2)pattern[2][i]=true;
+
+function drawDrums(){
+const box=document.getElementById("sequencer");
+box.innerHTML="";
+pattern.forEach((row,r)=>{
+let title=document.createElement("p");
+title.className="small";
+title.textContent=drumNames[r];
+box.appendChild(title);
+let line=document.createElement("div");
+line.className="steps";
+row.forEach((on,i)=>{
+let b=document.createElement("button");
+b.className="step"+(on?" on":"");
+b.textContent=i+1;
+b.onclick=()=>{pattern[r][i]=!pattern[r][i];b.classList.toggle("on")};
+line.appendChild(b);
+});
+box.appendChild(line);
+});
+}
+drawDrums();
+
+const trackBox=document.getElementById("tracks");
+["Dobok","Basszus","Dallam","Akkordok"].forEach((name,r)=>{
+let row=document.createElement("div");
+row.className="track";
+for(let i=0;i<16;i++){
+let cell=document.createElement("div");
+cell.className="cell";
+cell.onclick=()=>{
+if(cell.firstChild)cell.innerHTML="";
+else{let clip=document.createElement("div");clip.className="clip";cell.appendChild(clip)}
+};
+row.appendChild(cell);
+}
+trackBox.appendChild(row);
+});
+
+let timer=null,step=0;
+function tick(){
+pattern.forEach((row,r)=>{
+if(!row[step])return;
+if(r===0)sound(65,.18);
+if(r===1)sound(180,.12);
+if(r===2)sound(650,.06);
+if(r===3)sound(280,.12);
+});
+step=(step+1)%16;
+}
+document.getElementById("play").onclick=()=>{
+if(timer)return;
+if(audio.state==="suspended")audio.resume();
+let bpm=Math.max(50,Math.min(220,Number(document.getElementById("bpm").value)||120));
+tick();
+timer=setInterval(tick,60000/bpm/4);
+document.getElementById("status").textContent="Lejátszás";
+};
+document.getElementById("stop").onclick=()=>{
+clearInterval(timer);timer=null;step=0;
+document.getElementById("status").textContent="Megállítva";
+};
+document.getElementById("volume").oninput=e=>master.gain.value=e.target.value/100;
+document.getElementById("filter").oninput=e=>filter.frequency.value=e.target.value;
+document.getElementById("delay").oninput=e=>document.getElementById("status").textContent="Delay: "+e.target.value+"%";
+</script>
+</body>
+</html>
+
