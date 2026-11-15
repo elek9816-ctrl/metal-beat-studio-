@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metal Beat Studio</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#090b14;color:#fff;font-family:Arial,sans-serif}
+header{padding:22px;background:#111827;border-bottom:1px solid #00e5ff}
+.logo{font-size:25px;font-weight:bold;color:#00e5ff}
+nav{display:flex;gap:18px;flex-wrap:wrap;margin-top:15px}
+a{color:#ddd;text-decoration:none}
+main{max-width:1000px;margin:auto;padding:22px}
+.hero{padding:45px 5px}
+h1{font-size:42px;margin:10px 0;color:#00e5ff}
+p{color:#aab5c8;line-height:1.6}
+h2{color:#00e5ff;margin-top:35px}
+.panel{background:#141c2d;border:1px solid #26344d;border-radius:14px;padding:18px;margin:15px 0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.instrument{background:#1b2940;padding:18px;border-radius:12px;text-align:center}
+.instrument strong{display:block;margin-top:8px}
+button{background:#00cfe8;color:#07111b;border:0;border-radius:8px;padding:12px 16px;font-weight:bold;cursor:pointer;margin:4px}
+button:active{transform:scale(.96)}
+.padgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pad{background:#273751;color:white;min-height:75px}
+.pad.on{background:#ff3cac}
+.keys{display:flex;gap:4px;height:120px;margin:20px 0}
+.key{flex:1;background:#fff;color:#111;padding:0;border-radius:0 0 7px 7px}
+input{padding:12px;border-radius:7px;border:1px solid #34435d;background:#0c1320;color:white;max-width:100%}
+.saved{padding:10px;border-bottom:1px solid #34435d}
+footer{text-align:center;padding:25px;color:#8491a8}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">METAL BEAT STUDIO</div>
+<nav>
+<a href="#home">Kezdőlap</a>
+<a href="#studio">Stúdió</a>
+<a href="#hangszerek">Hangszerek</a>
+<a href="#mentes">Mentéseim</a>
+</nav>
+</header>
+<main>
+<section class="hero" id="home">
+<p>ONLINE MUSIC PRODUCTION</p>
+<h1>Alkosd meg a saját zenéd!</h1>
+<p>Üdvözöl a Metal Beat Studio! Készíts ritmusokat, próbálj ki hangszereket, és mentsd el zenei ötleteidet.</p>
+<a href="#studio"><button>STÚDIÓ MEGNYITÁSA</button></a>
+</section>
+
+<section id="hangszerek">
+<h2>Hangszerek</h2>
+<div class="grid">
+<div class="instrument">🎹<strong>Zongora</strong></div>
+<div class="instrument">🥁<strong>Dobgép</strong></div>
+<div class="instrument">🎸<strong>Gitár</strong></div>
+<div class="instrument">🎛️<strong>Szintetizátor</strong></div>
+<div class="instrument">🎻<strong>Vonós hangszerek</strong></div>
+<div class="instrument">🎹<strong>Orgona</strong></div>
+<div class="instrument">🔊<strong>808 Bass</strong></div>
+<div class="instrument">🥁<strong>Akusztikus dobok</strong></div>
+</div>
+</section>
+
+<section id="studio">
+<h2>Online zenei stúdió</h2>
+<div class="panel">
+<h3>🥁 Dobgép</h3>
+<p>Próbáld ki a különböző dobhangokat!</p>
+<div class="padgrid" id="pads"></div>
+<p>Tempó (BPM): <input id="bpm" type="number" value="120" min="60" max="200"></p>
+<button id="start">▶ Lejátszás</button>
+<button id="stop">■ Leállítás</button>
+</div>
+<div class="panel">
+<h3>🎹 Virtuális zongora</h3>
+<p>Koppints a billentyűkre!</p>
+<div class="keys" id="keys"></div>
+</div>
+<div class="panel">
+<h3>🎛️ Szintetizátor</h3>
+<p>Válassz hangmagasságot!</p>
+<input id="frequency" type="range" min="100" max="1000" value="440">
+<button id="synth">Hang lejátszása</button>
+</div>
+</section>
+
+<section id="mentes">
+<h2>Projekt mentése</h2>
+<div class="panel">
+<input id="project" placeholder="Projekt neve">
+<button id="save">💾 Mentés</button>
+<div id="saved"></div>
+</div>
+</section>
+</main>
+<footer>© 2026 Metal Beat Studio</footer>
+
+<script>
+const audio=new (window.AudioContext||window.webkitAudioContext)();
+
+function sound(freq,duration=.2,type="sine",volume=.15){
+if(audio.state==="suspended")audio.resume();
+const osc=audio.createOscillator();
+const gain=audio.createGain();
+osc.type=type;
+osc.frequency.value=freq;
+gain.gain.setValueAtTime(volume,audio.currentTime);
+gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);
+osc.connect(gain);
+gain.connect(audio.destination);
+osc.start();
+osc.stop(audio.currentTime+duration);
+}
+
+const names=["Kick","Snare","Hi-hat","Clap"];
+const freqs=[65,180,6500,900];
+const pads=document.getElementById("pads");
+
+names.forEach((name,i)=>{
+const b=document.createElement("button");
+b.className="pad";
+b.textContent=name;
+b.onclick=()=>sound(freqs[i],.2,i===2?"square":"triangle");
+pads.appendChild(b);
+});
+
+let timer=null;
+let step=0;
+
+document.getElementById("start").onclick=()=>{
+if(timer)return;
+const tick=()=>{
+const i=step%4;
+pads.children[i].classList.add("on");
+setTimeout(()=>pads.children[i].classList.remove("on"),100);
+if(i===0)sound(65,.2,"sine",.2);
+if(i===1)sound(180,.15,"triangle");
+if(i===2)sound(6500,.05,"square",.03);
+if(i===3)sound(900,.12,"triangle");
+step++;
+};
+tick();
+const bpm=Math.max(60,Math.min(200,Number(document.getElementById("bpm").value)||120));
+timer=setInterval(tick,60000/bpm);
+};
+
+document.getElementById("stop").onclick=()=>{
+clearInterval(timer);
+timer=null;
+step=0;
+};
+
+const notes=[261.63,293.66,329.63,349.23,392,440,493.88,523.25];
+const keys=document.getElementById("keys");
+notes.forEach((freq,i)=>{
+const b=document.createElement("button");
+b.className="key";
+b.textContent=["C","D","E","F","G","A","B","C"][i];
+b.onclick=()=>sound(freq,.5,"sine");
+keys.appendChild(b);
+});
+
+document.getElementById("synth").onclick=()=>{
+sound(Number(document.getElementById("frequency").value),.6,"sawtooth");
+};
+
+function showSaved(){
+const data=JSON.parse(localStorage.getItem("metalbeat")||"[]");
+document.getElementById("saved").innerHTML="";
+data.forEach(item=>{
+const div=document.createElement("div");
+div.className="saved";
+div.textContent="♫ "+item;
+document.getElementById("saved").appendChild(div);
+});
+}
+
+document.getElementById("save").onclick=()=>{
+const name=document.getElementById("project").value.trim();
+if(!name){alert("Adj nevet a projektnek!");return;}
+const data=JSON.parse(localStorage.getItem("metalbeat")||"[]");
+data.push(name);
+localStorage.setItem("metalbeat",JSON.stringify(data));
+document.getElementById("project").value="";
+showSaved();
+};
+showSaved();
+</script>
+</body>
+</html>
